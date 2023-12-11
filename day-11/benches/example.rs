@@ -12,6 +12,12 @@ fn part1() -> u32 {
 }
 
 #[divan::bench]
+fn part1_opt() -> u32 {
+    let input = include_str!("../src/input1.txt");
+    day_11::part1_optimized::process(black_box(input))
+}
+
+#[divan::bench]
 fn part2() -> usize {
     let input = include_str!("../src/input1.txt");
     day_11::part2::process(black_box(input), 10)

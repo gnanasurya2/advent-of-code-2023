@@ -54,19 +54,18 @@ pub fn process(input: &str, multiplier: usize) -> usize {
 
             for row in &galaxy_less_row {
                 if *row > min_row && *row < max_row {
-                    number_of_extra_rows += multiplier - 1;
+                    number_of_extra_rows += 1;
                 }
             }
 
             for col in &galaxy_less_column {
                 if *col > min_col && *col < max_col {
-                    number_of_extra_columns += multiplier - 1;
+                    number_of_extra_columns += 1
                 }
             }
 
             acc + max_row - min_row + max_col - min_col
-                + number_of_extra_rows
-                + number_of_extra_columns
+                + (number_of_extra_rows + number_of_extra_columns) * (multiplier - 1)
         })
 }
 
@@ -89,7 +88,7 @@ mod tests {
     #[test]
     fn it_works3() {
         let input = include_str!("./input1.txt");
-        let result = process(input, 10);
+        let result = process(input, 1000000);
         assert_eq!(result, 692506533832);
     }
 }
