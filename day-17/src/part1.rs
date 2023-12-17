@@ -1,4 +1,7 @@
-use std::collections::{BinaryHeap, HashMap};
+use std::{
+    collections::{BinaryHeap, HashMap},
+    time::Instant,
+};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 struct State {
@@ -49,45 +52,8 @@ struct DistKey {
     depth: u8,
 }
 
-fn find_valid_neighbours(curr: State, path: &Vec<Vec<u32>>, limit: isize) -> Vec<State> {
-    [
-        (0, 1, PointingDirection::Right),
-        (0, -1, PointingDirection::Left),
-        (1, 0, PointingDirection::Down),
-        (-1, 0, PointingDirection::Up),
-    ]
-    .iter()
-    .filter_map(|ele| {
-        let final_position = (
-            curr.position.0 as isize + ele.0,
-            curr.position.1 as isize + ele.1,
-        );
-        if curr.direction != ele.2.opposite()
-            && final_position.0 >= 0
-            && final_position.0 < limit
-            && final_position.1 >= 0
-            && final_position.1 < limit
-            && !(curr.direction == ele.2 && curr.depth == 3)
-        {
-            Some(State {
-                cost: curr.cost + path[final_position.0 as usize][final_position.1 as usize],
-                position: (final_position.0 as usize, final_position.1 as usize),
-                direction: ele.2,
-                depth: if ele.2 == curr.direction {
-                    curr.depth + 1
-                } else {
-                    1
-                },
-            })
-        } else {
-            None
-        }
-    })
-    // .inspect(|ele| println!("curr {:?} neigh {:?}", curr, ele))
-    .collect()
-}
-
 pub fn process(input: &str) -> u32 {
+    let start = Instant::now();
     let path = input
         .lines()
         .map(|line| {
@@ -128,6 +94,8 @@ pub fn process(input: &str) -> u32 {
 
     while let Some(curr_state) = heap.pop() {
         if curr_state.position == final_position {
+            let duration = start.elapsed();
+            println!("Time elapsed is: {:?}", duration);
             return curr_state.cost;
         }
 
@@ -139,42 +107,57 @@ pub fn process(input: &str) -> u32 {
 
         //We might have found better way
         if dist.contains_key(&dist_key) && curr_state.cost > dist[&dist_key] {
-            println!("found better way");
             continue;
         }
 
-        // println!("current ele {:?}", curr_state);
-        find_valid_neighbours(curr_state, &path, path.len() as isize)
-            .iter()
-            // .inspect(|ele| {
-            //     println!("neighbours {:?}", ele);
-            // })
-            .for_each(|ele| {
-                let dist_key = DistKey {
-                    position: ele.position,
-                    direction: ele.direction,
-                    depth: ele.depth,
-                };
-                if !dist.contains_key(&dist_key) || ele.cost < dist[&dist_key] {
-                    heap.push(ele.clone());
+        [
+            (0, 1, PointingDirection::Right),
+            (0, -1, PointingDirection::Left),
+            (1, 0, PointingDirection::Down),
+            (-1, 0, PointingDirection::Up),
+        ]
+        .iter()
+        .filter_map(|ele| {
+            let final_position = (
+                curr_state.position.0 as isize + ele.0,
+                curr_state.position.1 as isize + ele.1,
+            );
+            if curr_state.direction != ele.2.opposite()
+                && final_position.0 >= 0
+                && final_position.0 < path.len() as isize
+                && final_position.1 >= 0
+                && final_position.1 < path[0].len() as isize
+                && !(curr_state.direction == ele.2 && curr_state.depth == 3)
+            {
+                Some(State {
+                    cost: curr_state.cost
+                        + path[final_position.0 as usize][final_position.1 as usize],
+                    position: (final_position.0 as usize, final_position.1 as usize),
+                    direction: ele.2,
+                    depth: if ele.2 == curr_state.direction {
+                        curr_state.depth + 1
+                    } else {
+                        1
+                    },
+                })
+            } else {
+                None
+            }
+        })
+        .for_each(|ele| {
+            let dist_key = DistKey {
+                position: ele.position,
+                direction: ele.direction,
+                depth: ele.depth,
+            };
+            if !dist.contains_key(&dist_key) || ele.cost < dist[&dist_key] {
+                heap.push(ele.clone());
 
-                    dist.insert(dist_key, ele.cost);
-                }
-            })
+                dist.insert(dist_key, ele.cost);
+            }
+        })
     }
-    // for i in 0..path.len() {
-    //     for j in 0..path.len() {
-    //         print!("{}_", path[i][j]);
-    //     }
-    //     println!("");
-    // }
-    // println!("");
-    // for i in 0..path.len() {
-    //     for j in 0..path.len() {
-    //         print!("{}_", dist[i][j]);
-    //     }
-    //     println!("");
-    // }
+
     32
 }
 
